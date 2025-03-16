@@ -1,4 +1,12 @@
+# Librería para interactuar con servicios web y manejar respuestas
 requests
+
+# Librería para la API del bot de Telegram
 pyTelegramBotAPI
+
+# Liberías para la News API
 newsapi
 newsapi-python
+
+# Librería de OpenAI
+openai==0.28

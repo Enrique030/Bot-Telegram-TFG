@@ -14,12 +14,15 @@
 5. Ejecuta el bot usando python main.py.
 
 ## Funcionalidades:
-- Responde a los comandos /start y /help.
-- Repite cualquier otro mensaje que le envíes.
+- Responde a los comandos /start, /help, /pizza, /foto, /clima Ciudad y /news.
+- Repite cualquier otro mensaje que le envíes. (Lo he quitado, no tiene utilidad)
 - Interacción con botones: El bot puede presentar opciones al usuario a través de botones interactivos.
 - Información meteorológica: Al enviar el comando /clima [nombre_de_la_ciudad], el bot proporciona información meteorológica actual de la ciudad especificada.
-- Envío de contenido multimedia: El bot puede enviar fotos, audios y stickers a petición del usuario.
-- Uso de emojis: El bot puede responder con emojis para hacer la interacción más amena. 
+- En construcción -> API de OpenAI (API muy interesante con la que se pueden hacer muchas cosas)
+- Envío de contenido multimedia: El bot puede enviar fotos, audios y stickers a petición del usuario. (Falta implementarlo)
+- Uso de emojis: El bot puede responder con emojis para hacer la interacción más amena. (Falta implementarlo)
 
 ## Conexión con APIs
-Este bot utiliza la API de OpenWeatherMap para proporcionar información meteorológica en tiempo real. Asegúrate de obtener tu propia clave API de OpenWeatherMap y reemplazar 'TU_CLAVE_API' en 'main.py' con tu clave.
+Este bot utiliza la API de OpenWeatherMap para proporcionar información meteorológica en tiempo real.
+
+También utiliza la API de News API para acceder a noticias de diferentes fuentes. (Esta API no me convence mucho porque solo da noticias de algunas categorías y de algunos países en específico aunque tenga soporte para casi todos. Creo que no es de mucha utilidad e importancia.)

@@ -1,48 +1,40 @@
 
 import telebot
 import requests
+import openai
 
+from constantes import *
 from telebot import types
 # from newsapi import NewsApiClient
-
 
 # Token para conexión con nuestro BOT
 TOKEN = '7845923493:AAGgvXD_zvcqZUAQBi3C-UWm1IMRSikEf7U'
 bot = telebot.TeleBot(TOKEN)
 
+'''
+openai.api_key = API_KEY_OPENAI
 
-# API para datos y noticias
+def get_openai_response(prompt):
+    """Función para obtener una respuesta de la API de OpenAI."""
+    try:
+        response = openai.Completion.create(
+            engine="gpt-4o",  # Se puede elegir otro modelo
+            prompt=prompt,
+            max_tokens=150  # Ajustamos según sea necesario
+        )
+        return response.choices[0].text.strip()
 
-# API OpenWeatherMap
-API_KEY_WEATHER = '1d2f61f9e0f17884c9fcfd8b7f87830c'
-BASE_URL_WEATHER = 'https://api.openweathermap.org/data/2.5/weather?'
-
-# News API
-API_KEY_NEWS = 'a2f04fc6475b482590647c6f77e0294a'
-BASE_URL_NEWS = 'https://newsapi.org/'
-
-
-# APIS para IA y NPL
-
-# OpenAI API
-API_KEY_OPENAI = ''
-BASE_URL_OPENAI = ''
-
-# IBM Watson Assistant
-API_KEY_IBM = ''
-BASE_URL_IBM = ''
+    except Exception as e:
+        print(f"Error al obtener respuesta de OpenAI: {e}")
+        return "Lo siento, no pude procesar tu solicitud en este momento."
 
 
-# APIS para entretenimiento y curiosidades
-
-# Giphy API
-API_KEY_GIFT = ''
-BASE_URL_GIFT = ''
-
-# JokeAPI
-API_KEY_JOKE = ''
-BASE_URL_JOKE = ''
-
+@bot.message_handler(func=lambda message: True)
+def handle_message(message):
+    """Manejador de mensajes para interactuar con la API de OpenAI."""
+    response = get_openai_response(message.text)
+    bot.reply_to(message, response)
+'''
 
 @bot.message_handler(commands=['news'])
 def send_news(message):
@@ -54,6 +46,7 @@ def send_news(message):
         "pageSize": 5  # Número de noticias a obtener
     }
 
+    # Hacemos una solicitud GET
     response = requests.get(f"{BASE_URL_NEWS}v2/top-headlines", params=params)
     data = response.json()
 
@@ -78,6 +71,8 @@ def get_weather(city_name):
     """Función que utiliza la API OpenWeatherMap para saber el clima
     de una ciudad en específico"""
     complete_url = f"{BASE_URL_WEATHER}q={city_name}&appid={API_KEY_WEATHER}&lang=es&units=metric"
+
+    # Hacemos una solicitud GET
     response = requests.get(complete_url)
     data = response.json()
     print(data)
