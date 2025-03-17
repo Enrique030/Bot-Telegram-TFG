@@ -24,9 +24,10 @@ BASE_URL_IBM = ''
 # APIS para entretenimiento y curiosidades
 
 # Giphy API
-API_KEY_GIFT = ''
-BASE_URL_GIFT = ''
+API_KEY_GIPHY = 'aV250twZ9EMwcvWrZQZtUSCVWLLXpG0S'
+BASE_URL_GIPHY = 'https://api.giphy.com/v1/gifs/search'
 
 # JokeAPI
-API_KEY_JOKE = ''
-BASE_URL_JOKE = ''
+BASE_URL_JOKE = 'https://v2.jokeapi.dev/joke/Any' # Se puede cambiar el tipo de chistes que genera el bot, cambiando la categoría
+
+# Estas son todas las categorías disponibles: Any, Misc, Programming, Dark, Pun, Spooky, Christmas

@@ -1,7 +1,7 @@
 
 import telebot
 import requests
-import openai
+# import openai
 
 from constantes import *
 from telebot import types
@@ -10,6 +10,57 @@ from telebot import types
 # Token para conexión con nuestro BOT
 TOKEN = '7845923493:AAGgvXD_zvcqZUAQBi3C-UWm1IMRSikEf7U'
 bot = telebot.TeleBot(TOKEN)
+
+@bot.message_handler(commands=['chiste'])
+def send_joke(message):
+    """Función para obtener y enviar un chiste aleatorio desde JokeAPI"""
+    params = {
+        "format": "json",
+        "lang": "es",  # Se puede cambiar a "en" para chistes en inglés
+        "type": "any"  # Puede ser "single" (una sola línea) o "twopart" (pregunta-respuesta)
+    }
+
+    response = requests.get(BASE_URL_JOKE, params=params)
+    joke_data = response.json()
+
+    if joke_data.get("error"):
+        bot.reply_to(message, "Lo siento, no pude encontrar un chiste ahora mismo.")
+        return
+
+    # Formateamos el chiste dependiendo de su tipo
+    if joke_data["type"] == "single":
+        joke_text = joke_data["joke"]
+    else:  # type == "twopart"
+        joke_text = f"{joke_data['setup']}\n\n{joke_data['delivery']}"
+
+    bot.reply_to(message, joke_text)
+
+
+@bot.message_handler(commands=['gif'])
+def send_gif(message):
+    """Función para recibir un GIF basado en una palabra clave"""
+    if len(message.text.split()) > 1:
+        query = message.text.split(maxsplit=1)[1]
+    else:
+        query = "random"
+
+    params = {
+        "api_key": API_KEY_GIPHY,
+        "q": query,
+        "limit": 1,
+        "rating": "g",
+        "lang": "es"
+    }
+
+    response = requests.get(BASE_URL_GIPHY, params=params)
+    data = response.json()
+
+    if data.get("data"):
+        gif_url = data["data"][0]["images"]["original"]["url"]
+        bot.send_animation(message.chat.id, gif_url)
+    else:
+        bot.reply_to(message, "No encontré ningún GIF para esa búsqueda")
+
 
 '''
 openai.api_key = API_KEY_OPENAI
@@ -111,7 +162,7 @@ def send_help(message):
     """Función para ver las instrucciones del bot utilizando el comando /help
     Qué es lo que realmente puede hacer el bot"""
     bot.reply_to(message, 'Puedes interactuar conmigo usando comandos. '
-                          'Por ahora, solo respondo a /start, /help, /pizza, /foto, /clima Ciudad y /news')
+                          'Por ahora, solo respondo a /start, /help, /pizza, /foto, /clima <ciudad>, /news, /gif <palabra_clave> y /chiste.')
 
 
 # @bot.message_handler(func=lambda m: True)
