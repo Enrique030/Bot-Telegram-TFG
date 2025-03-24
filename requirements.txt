@@ -1,3 +1,6 @@
+
+# Librerías para el bot_telegram.py
+
 # Librería para interactuar con servicios web y manejar respuestas
 requests
 
@@ -9,4 +12,22 @@ newsapi
 newsapi-python
 
 # Librería de OpenAI
-openai==0.28
+openai
+
+# -------------------------------------------------
+
+# Librerías para el nuevo bot
+langchain
+openai
+faiss-cpu
+pypdf
+flask-cors
+gpt4all
+# chromadb
+flask
+requests
+jsonify
+torch
+transformers
+sentence-transformers
+accelerate
