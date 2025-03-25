@@ -15,7 +15,6 @@ newsapi-python
 openai
 
 # -------------------------------------------------
-
 # Librerías para el nuevo bot
 langchain
 openai
@@ -31,3 +30,5 @@ torch
 transformers
 sentence-transformers
 accelerate
+
+telegram
