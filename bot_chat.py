@@ -59,7 +59,9 @@ def handle_user_message(message):
 def generate_response(message):
     """Función que genera la respuesta del bot usando Mistral AI"""
     user_id = message.from_user.id
-    user_text = message.text  # Guardamos el mensaje original del usuario
+
+    # Guardamos el mensaje original del usuario
+    user_text = message.text
     url = "https://api.mistral.ai/v1/chat/completions"
 
     headers = {
@@ -70,8 +72,9 @@ def generate_response(message):
     data = {
         "model": "mistral-tiny",  # Se puede cambiar a mistral-small (Más preciso, pero algo más lento)
                                   # o mistral-medium (Mejor calidad de respuesta, pero más consumo)
-        "messages": mensajes[user_id]["messages"],
+        "messages": mensajes[user_id]["messages"]
         # "max_tokens": 100 -> para limitar la longitud de la respuesta
+        # "temeperature": 0.3 -> para ajustar la precisión del bot, etc)
     }
 
     response = requests.post(url, headers=headers, json=data)
@@ -92,19 +95,34 @@ def generate_response(message):
 
 async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Función asíncrona para manejar los mensajes en Telegram"""
+    print(f"ID del usuario: {update.message.chat_id}")
     handle_user_message(update.message)
     response = generate_response(update.message)
     await update.message.reply_text(response)
 
 
+async def send_welcome_message(application):
+    """Función que envía un mensaje de bienvenida al iniciar el bot"""
+    USER_ID = "7568207284"  # Reemplaza con el ID del usuario o grupo al que quieres enviar el mensaje.
+    welcome_message = ("¡Hola, encantado de conocerte! 😊 Soy Prevencio-Bot, el bot que sabe todo sobre los"
+                       "riesgos laborales. Pregúntame lo que quieras, estoy aquí para ayudarte")
+
+    await application.bot.send_message(chat_id=USER_ID, text=welcome_message)
+
+
 def main():
     """Función principal"""
     TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
-    bot = Application.builder().token(TELEGRAM_TOKEN).build()
+    # Configuramos el bot con post_init para enviar el mensaje automático
+    bot = Application.builder() \
+        .token(TELEGRAM_TOKEN) \
+        .post_init(send_welcome_message) \
+        .build()
 
     bot.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, message_handler))
-
     bot.run_polling(allowed_updates=Update.ALL_TYPES)
+
+
 
 if __name__ == "__main__":
     main()
