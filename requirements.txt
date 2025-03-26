@@ -1,5 +1,5 @@
 
-# Librerías para el bot_telegram.py
+# Librerías para el bot_antiguo.py
 
 # Librería para interactuar con servicios web y manejar respuestas
 requests
@@ -11,18 +11,17 @@ pyTelegramBotAPI
 newsapi
 newsapi-python
 
-# Librería de OpenAI
-openai
 
 # -------------------------------------------------
+
 # Librerías para el nuevo bot
 langchain
 openai
 faiss-cpu
 pypdf
+pypdf2
 flask-cors
 gpt4all
-# chromadb
 flask
 requests
 jsonify
@@ -30,5 +29,6 @@ torch
 transformers
 sentence-transformers
 accelerate
-
+scikit-learn
+dotenv
 telegram
