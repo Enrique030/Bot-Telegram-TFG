@@ -1,5 +1,7 @@
 
 import os
+from typing import TextIO
+
 import requests
 import json
 
@@ -37,6 +39,7 @@ def guardar_en_json(user_id, user_message, bot_response):
         data[str(user_id)].append({"usuario": user_message, "bot": bot_response})
 
         # Guardamos en el archivo JSON
+        f: TextIO
         with open(JSON_FILE, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=4, ensure_ascii=False)
 
@@ -103,19 +106,19 @@ async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def send_welcome_message(application):
     """Función que envía un mensaje de bienvenida al iniciar el bot"""
-    USER_ID = "7568207284"  # Reemplaza con el ID del usuario o grupo al que quieres enviar el mensaje.
+    user_id = "7568207284"  # Reemplaza con el ID del usuario o grupo al que quieres enviar el mensaje.
     welcome_message = ("¡Hola, encantado de conocerte! 😊 Soy Prevencio-Bot, el bot que sabe todo sobre los"
                        "riesgos laborales. Pregúntame lo que quieras, estoy aquí para ayudarte")
 
-    await application.bot.send_message(chat_id=USER_ID, text=welcome_message)
+    await application.bot.send_message(chat_id=user_id, text=welcome_message)
 
 
 def main():
     """Función principal"""
-    TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
+    telegram_token = os.getenv("telegram_token")
     # Configuramos el bot con post_init para enviar el mensaje automático
     bot = Application.builder() \
-        .token(TELEGRAM_TOKEN) \
+        .token(telegram_token) \
         .post_init(send_welcome_message) \
         .build()
 
