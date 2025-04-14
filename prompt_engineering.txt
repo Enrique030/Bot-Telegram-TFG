@@ -1,0 +1,119 @@
+
+A continuación, se presenta una lista de 30 prompts organizados por categorías.
+Se pueden enviar al bot a través de Telegram uno por uno o automatizar las pruebas si prefieres.
+Cada prompt incluye una breve explicación de lo que evalúa.
+
+Estas preguntas evalúan el conocimiento básico del bot y su capacidad para responder de forma clara a usuarios sin experiencia técnica.
+
+
+1. Consultas Generales sobre Riesgos Laborales
+
+"¿Qué son los riesgos laborales y por qué son importantes para una PYME?"
+Evalúa: Comprensión de conceptos básicos y capacidad para explicar en lenguaje sencillo.
+
+"¿Qué normativa regula los riesgos laborales en España?"
+Evalúa: Conocimiento de legislación específica (por ejemplo, Ley de Prevención de Riesgos Laborales 31/1995).
+
+"¿Cuáles son los principales tipos de riesgos laborales en una empresa pequeña?"
+Evalúa: Capacidad para clasificar riesgos (físicos, químicos, ergonómicos, etc.).
+
+"¿Cómo puedo empezar a gestionar los riesgos laborales en mi PYME?"
+Evalúa: Provisión de pasos prácticos y orientación inicial.
+
+"¿Qué es un plan de prevención de riesgos laborales?"
+Evalúa: Explicación de conceptos técnicos de forma accesible.
+
+
+2. Riesgos Específicos por Sector
+Estas preguntas prueban la capacidad del bot para adaptar respuestas a sectores típicos de PYMES.
+
+"¿Cuáles son los riesgos laborales más comunes en una oficina pequeña?"
+Evalúa: Identificación de riesgos ergonómicos, eléctricos, y psicosociales.
+
+"¿Qué medidas de seguridad debo tomar en una PYME de construcción?"
+Evalúa: Conocimiento de riesgos físicos (caídas, maquinaria) y medidas específicas.
+
+"¿Cómo prevenir riesgos químicos en una peluquería?"
+Evalúa: Manejo de riesgos químicos en un entorno de servicios.
+
+"¿Qué riesgos laborales hay en una tienda de ropa y cómo mitigarlos?"
+Evalúa: Aplicación a comercios minoristas (riesgos posturales, caídas).
+
+"¿Qué hacer para garantizar la seguridad en una pequeña fábrica de alimentos?"
+Evalúa: Conocimiento de riesgos biológicos, mecánicos, y normativas de higiene.
+
+
+3. Escenarios Técnicos y Específicos
+Estas preguntas son más detalladas para evaluar la precisión técnica y la capacidad de usar información de PDFs.
+
+"¿Cómo evaluar los riesgos ergonómicos de un trabajador que pasa 8 horas sentado frente a un ordenador?"
+Evalúa: Detalles sobre posturas, pausas, y ajustes ergonómicos.
+
+"¿Qué equipos de protección individual (EPIs) son obligatorios para un soldador en una PYME?"
+Evalúa: Conocimiento de EPIs específicos (máscaras, guantes, etc.).
+
+"¿Cómo prevenir el estrés laboral en una PYME con alta carga de trabajo?"
+Evalúa: Estrategias psicosociales (gestión del tiempo, apoyo emocional).
+
+"¿Qué hacer si un trabajador sufre un accidente por una máquina en una fábrica pequeña?"
+Evalúa: Protocolos de actuación (primeros auxilios, notificación).
+
+"¿Cuáles son los requisitos para un extintor en una oficina de 100 m²?"
+Evalúa: Normativa específica sobre prevención de incendios.
+
+
+4. Consultas sobre Gestión y Formación
+Estas preguntas prueban la capacidad del bot para orientar sobre procesos organizativos.
+
+"¿Es obligatorio tener un servicio de prevención en una PYME de 10 empleados?"
+Evalúa: Conocimiento de obligaciones legales según tamaño de empresa.
+
+"¿Cómo formar a mis empleados en prevención de riesgos laborales?"
+Evalúa: Propuestas de formación (cursos, charlas).
+
+"¿Qué documentos debo tener para cumplir con la prevención de riesgos laborales?"
+Evalúa: Listado de documentación (evaluación de riesgos, plan de prevención).
+
+"¿Cómo realizar una evaluación de riesgos en una PYME sin experiencia previa?"
+Evalúa: Guía práctica para principiantes.
+
+"¿Quién debe encargarse de la prevención de riesgos en una empresa de 5 trabajadores?"
+Evalúa: Roles y responsabilidades legales.
+
+
+5. Escenarios de Resolución de Problemas
+Estas preguntas simulan situaciones reales para evaluar el razonamiento del bot.
+
+"Un empleado se queja de dolor de espalda por trabajar de pie todo el día, ¿qué hago?"
+Evalúa: Soluciones ergonómicas (alfombras antifatiga, descansos).
+
+"Tengo una máquina vieja en mi taller que no cumple normativas, ¿cómo proceder?"
+Evalúa: Consejos sobre actualización o sustitución.
+
+"Un cliente resbaló en mi tienda por el suelo mojado, ¿qué medidas tomar para evitarlo?"
+Evalúa: Prevención de caídas (señalización, limpieza).
+
+"Un trabajador dice que el ruido en la fábrica le molesta, ¿qué puedo hacer?"
+Evalúa: Soluciones para riesgos acústicos (protectores, aislamiento).
+
+"¿Cómo manejar un caso de acoso laboral en una PYME?"
+Evalúa: Protocolos psicosociales y legales.
+
+
+6. Preguntas para Probar Robustez
+Estas preguntas evalúan cómo maneja el bot consultas ambiguas, fuera de contexto, o desafiantes.
+
+"¿Qué riesgos hay si no hago nada por la seguridad en mi empresa?"
+Evalúa: Explicación de consecuencias legales y prácticas.
+
+"Dime algo que no sepa sobre riesgos laborales."
+Evalúa: Creatividad y profundidad de conocimiento.
+
+"¿Es lo mismo un riesgo laboral que un accidente laboral?"
+Evalúa: Claridad en definiciones técnicas.
+
+"No entiendo nada de riesgos laborales, ¿por dónde empiezo?"
+Evalúa: Capacidad para guiar a usuarios novatos.
+
+"¿Puedes darme un ejemplo real de un plan de prevención para una PYME?"
+Evalúa: Generación de ejemplos prácticos.

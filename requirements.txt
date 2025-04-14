@@ -11,9 +11,11 @@ pyTelegramBotAPI
 newsapi
 newsapi-python
 
+llama-index
+google
 # -------------------------------------------------
 
-# Librerías para el bot_chat.py
+# Librerías para el bot_chat_Mistral.py
 annotated-types==0.6.0
 anyio==4.1.0
 certifi==2023.11.17
@@ -52,3 +54,7 @@ accelerate
 scikit-learn
 dotenv
 telegram
+
+# -------------------------------------------
+
+pdfminer
