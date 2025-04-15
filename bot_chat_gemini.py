@@ -6,13 +6,14 @@ import google.generativeai as genai
 import json
 from llama_index.core import VectorStoreIndex, Document
 from llama_index.core import Settings
+from llama_index.llms.google_genai import GoogleGenAI  # Nuevo import
 from llama_index.embeddings.huggingface import HuggingFaceEmbedding
 from telegram.ext import Application, ContextTypes, MessageHandler, filters
 from telegram import Update
 from dotenv import load_dotenv
 
-# import warnings
-# warnings.filterwarnings("ignore", category=UserWarning, message="To support symlinks on Windows")
+import warnings
+warnings.filterwarnings("ignore", category=UserWarning, message="To support symlinks on Windows")
 
 # Load environment variables
 load_dotenv()
@@ -118,7 +119,16 @@ async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     print(f"Message received from ID: {update.message.chat_id}")
     handle_user_message(update.message)
     response = generate_response(update.message, pdf_index)
-    await update.message.reply_text(response)
+
+    # Divide la respuesta en fragmentos
+    max_length = 4000
+    if len(response) > max_length:
+        parts = [response[i:i + max_length] for i in range(0, len(response), max_length)]
+        for part in parts:
+            await update.message.reply_text(part)
+    else:
+        await update.message.reply_text(response)
+
 
 async def send_welcome_message(application):
     """Send a welcome message when the bot starts"""
@@ -127,8 +137,9 @@ async def send_welcome_message(application):
                        "Pregúntame lo que necesites sobre seguridad en PYMES.")
     await application.bot.send_message(chat_id=user_id, text=welcome_message)
 
+
 def initialize_pdf_index():
-    """Initialize the PDF index using Hugging Face embeddings"""
+    """Initialize the PDF index using Hugging Face embeddings and Gemini LLM"""
     global pdf_index
     if not os.path.exists(PDF_DIRECTORY):
         print(f"⚠️ Directory '{PDF_DIRECTORY}' does not exist.")
@@ -155,14 +166,17 @@ def initialize_pdf_index():
         return
 
     try:
-        # Use Hugging Face's sentence-transformers model (free and local)
+        # Configura el modelo de embeddings
         Settings.embed_model = HuggingFaceEmbedding(
             model_name="sentence-transformers/all-MiniLM-L6-v2"
         )
+        # Configura el LLM como GoogleGenAI (nuevo)
+        Settings.llm = GoogleGenAI(model="gemini-1.5-flash", api_key=GOOGLE_API_KEY)
         pdf_index = VectorStoreIndex.from_documents(documents)
         print("✅ PDF index loaded successfully.")
     except Exception as e:
         print(f"❌ Error creating index: {str(e)}")
+
 
 def main():
     """Main function"""
@@ -175,6 +189,26 @@ def main():
     bot.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, message_handler))
     print("🤖 Bot is running...")
     bot.run_polling(allowed_updates=Update.ALL_TYPES)
+
+    prompts = [
+        "¿Qué son los riesgos laborales y por qué son importantes para una PYME?",
+        "¿Qué normativa regula los riesgos laborales en España?",
+        "¿Cuáles son los principales tipos de riesgos laborales en una empresa pequeña?",
+        "¿Cómo puedo empezar a gestionar los riesgos laborales en mi PYME?",
+        "¿Qué es un plan de prevención de riesgos laborales?"
+
+        # Añade todos los prompts aquí
+    ]
+
+    results = []
+    for prompt in prompts:
+        # Simula el envío al bot (usa tu función generate_response)
+        response = generate_response({"text": prompt, "from_user": {"id": 7568207284}}, pdf_index)
+        results.append({"prompt": prompt, "response": response})
+
+    # Guarda resultados
+    with open("test_results.json", "w", encoding="utf-8") as f:
+        json.dump(results, f, indent=4, ensure_ascii=False)
 
 if __name__ == "__main__":
     main()
