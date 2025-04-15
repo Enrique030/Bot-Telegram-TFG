@@ -4,6 +4,7 @@ import requests
 import json
 from llama_index.core import VectorStoreIndex, Document
 from llama_index.core import Settings
+from llama_index.llms.mistralai import MistralAI  # Import correcto para Mistral
 from llama_index.embeddings.huggingface import HuggingFaceEmbedding
 from telegram.ext import Application, ContextTypes, MessageHandler, filters
 from telegram import Update
@@ -18,8 +19,6 @@ PDF_DIRECTORY = "documentos"
 
 # Store user messages
 mensajes = {}
-
-# Initialize the document index as None
 pdf_index = None
 
 def guardar_en_json(user_id, user_message, bot_response):
@@ -79,7 +78,7 @@ def query_pdf_index(index, query):
         return "No se pudo consultar la información de los documentos."
 
 def generate_response(message, pdf_index):
-    """Generate response using Mistral AI and PDF index"""
+    """Generate response using Mistral AI"""
     user_id = message.from_user.id
     user_text = message.text
 
@@ -88,22 +87,30 @@ def generate_response(message, pdf_index):
 
     mensajes[user_id]["messages"].append({"role": "user", "content": user_text})
 
+    context = ""
     if pdf_index and any(keyword in user_text.lower() for keyword in ["riesgos", "laboral", "pymes", "seguridad"]):
         info_rag = query_pdf_index(pdf_index, user_text)
-        context_message = f"Información adicional de documentos: {info_rag}"
-        mensajes[user_id]["messages"].append({"role": "system", "content": context_message})
+        context = f"Información adicional de documentos: {info_rag}\n\n"
 
-    url = "https://api.mistral.ai/v1/chat/completions"
-    headers = {
-        "Authorization": f"Bearer {MISTRAL_API_KEY}",
-        "Content-Type": "application/json"
-    }
-    data = {
-        "model": "mistral-tiny",
-        "messages": mensajes[user_id]["messages"]
-    }
+    conversation_history = "\n".join(
+        [f"{msg['role']}: {msg['content']}" for msg in mensajes[user_id]["messages"]]
+    )
+    prompt = f"{context}Historia de la conversación:\n{conversation_history}\n\nResponde como un consultor experto en riesgos laborales, incluyendo detalles técnicos, normativas relevantes y ejemplos prácticos. Sé conciso y limita la respuesta a 3000 caracteres:"
 
     try:
+        url = "https://api.mistral.ai/v1/chat/completions"
+        headers = {
+            "Authorization": f"Bearer {MISTRAL_API_KEY}",
+            "Content-Type": "application/json"
+        }
+        data = {
+            "model": "mistral-tiny",
+            "messages": [
+                {"role": "system", "content": "Eres un consultor experto en riesgos laborales. Responde de manera técnica, incluyendo normativas relevantes y ejemplos prácticos. Sé conciso."},
+                {"role": "user", "content": prompt}
+            ]
+        }
+
         response = requests.post(url, headers=headers, json=data)
         response.raise_for_status()
         bot_response = response.json()["choices"][0]["message"]["content"]
@@ -118,7 +125,15 @@ async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     print(f"Mensaje recibido de ID: {update.message.chat_id}")
     handle_user_message(update.message)
     response = generate_response(update.message, pdf_index)
-    await update.message.reply_text(response)
+
+    # Divide la respuesta en fragmentos
+    max_length = 4000
+    if len(response) > max_length:
+        parts = [response[i:i + max_length] for i in range(0, len(response), max_length)]
+        for part in parts:
+            await update.message.reply_text(part)
+    else:
+        await update.message.reply_text(response)
 
 async def send_welcome_message(application):
     """Send a welcome message when the bot starts"""
@@ -128,7 +143,7 @@ async def send_welcome_message(application):
     await application.bot.send_message(chat_id=user_id, text=welcome_message)
 
 def initialize_pdf_index():
-    """Initialize the PDF index using Hugging Face embeddings"""
+    """Initialize the PDF index using Hugging Face embeddings and Mistral LLM"""
     global pdf_index
     if not os.path.exists(PDF_DIRECTORY):
         print(f"⚠️ Directory '{PDF_DIRECTORY}' does not exist.")
@@ -155,10 +170,12 @@ def initialize_pdf_index():
         return
 
     try:
-        # Use Hugging Face's sentence-transformers model
+        # Configura el modelo de embeddings
         Settings.embed_model = HuggingFaceEmbedding(
             model_name="sentence-transformers/all-MiniLM-L6-v2"
         )
+        # Configura el LLM como Mistral
+        Settings.llm = MistralAI(api_key=MISTRAL_API_KEY, model="mistral-tiny")
         pdf_index = VectorStoreIndex.from_documents(documents)
         print("✅ PDF index loaded successfully.")
     except Exception as e:
@@ -175,6 +192,24 @@ def main():
     bot.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, message_handler))
     print("🤖 Bot is running...")
     bot.run_polling(allowed_updates=Update.ALL_TYPES)
+
+    prompts = [
+        "¿Qué son los riesgos laborales y por qué son importantes para una PYME?",
+        "¿Qué normativa regula los riesgos laborales en España?",
+        "¿Cuáles son los principales tipos de riesgos laborales en una empresa pequeña?",
+        "¿Cómo puedo empezar a gestionar los riesgos laborales en mi PYME?",
+        "¿Qué es un plan de prevención de riesgos laborales?"
+    ]
+
+    results = []
+    for prompt in prompts:
+        # Simula el envío al bot (usa tu función generate_response)
+        response = generate_response({"text": prompt, "from_user": {"id": 7568207284}}, pdf_index)
+        results.append({"prompt": prompt, "response": response})
+
+    # Guarda resultados
+    with open("test_results.json", "w", encoding="utf-8") as f:
+        json.dump(results, f, indent=4, ensure_ascii=False)
 
 if __name__ == "__main__":
     main()
