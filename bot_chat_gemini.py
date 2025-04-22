@@ -6,7 +6,7 @@ import google.generativeai as genai
 import json
 from llama_index.core import VectorStoreIndex, Document
 from llama_index.core import Settings
-from llama_index.llms.google_genai import GoogleGenAI  # Nuevo import
+from llama_index.llms.google_genai import GoogleGenAI
 from llama_index.embeddings.huggingface import HuggingFaceEmbedding
 from telegram.ext import Application, ContextTypes, MessageHandler, filters
 from telegram import Update
@@ -96,16 +96,36 @@ def generate_response(message, pdf_index):
     mensajes[user_id]["messages"].append({"role": "user", "content": user_text})
 
     context = ""
-    if pdf_index and any(keyword in user_text.lower() for keyword in ["riesgos", "laboral", "pymes", "seguridad"]):
+    keywords = [
+        "riesgos", "laboral", "laborales", "prevención", "seguridad", "salud", "trabajo",
+        "ocupacional", "accidente", "enfermedad", "profesional", "físico", "químico",
+        "biológico", "ergonómico", "psicosocial", "caída", "atrapamiento", "quemadura",
+        "corte", "ruido", "vibración", "estrés", "fatiga", "normativa", "ley", "decreto",
+        "reglamento", "31/1995", "486/1997", "39/1997", "773/1997", "compliance",
+        "obligación", "inspección", "evaluación", "riesgo", "plan", "medida", "correctiva",
+        "preventiva", "formación", "capacitación", "protocolo", "vigilancia", "emergencia",
+        "evacuación", "equipo", "protección", "EPI", "maquinaria", "herramienta",
+        "instalación", "mantenimiento", "señalización", "PYME", "pequeña", "mediana",
+        "empresa", "autónomo", "negocio", "emprendedor", "construcción", "hostelería",
+        "industria", "oficina", "comercio", "transporte", "agricultura", "sanidad",
+        "taller", "almacén", "trabajador", "empleado", "personal", "contratista",
+        "jornada", "turno", "descanso", "exposición", "peligro", "incidente", "ergonomía",
+        "psicología", "ventilación", "iluminación", "temperatura"
+    ]
+    if pdf_index and any(keyword in user_text.lower() for keyword in keywords):
         info_rag = query_pdf_index(pdf_index, user_text)
         context = f"Información adicional de documentos: {info_rag}\n\n"
 
     conversation_history = "\n".join(
         [f"{msg['role']}: {msg['content']}" for msg in mensajes[user_id]["messages"]]
     )
-    prompt = f"{context}Historia de la conversación:\n{conversation_history}\n\nResponde como un consultor experto en riesgos laborales, incluyendo detalles técnicos, normativas relevantes y ejemplos prácticos:"
+    prompt = (f"{context}Historia de la conversación:\n{conversation_history}\n\nResponde como un consultor"
+              f" experto en riesgos laborales, incluyendo detalles técnicos, normativas relevantes y "
+              f"ejemplos prácticos cuando la pregunta lo requiera. Sé conciso, claro e incluye enlaces "
+              f"a fuentes oficiales como el BOE o INSST para respaldar la información cuando la pregunta "
+              f"lo requiera.")
     try:
-        model = genai.GenerativeModel('gemini-1.5-flash')
+        model = genai.GenerativeModel('gemini-2.0-flash')
         response = model.generate_content(prompt)
         bot_response = response.text
         mensajes[user_id]["messages"].append({"role": "assistant", "content": bot_response})
@@ -171,7 +191,7 @@ def initialize_pdf_index():
             model_name="sentence-transformers/all-MiniLM-L6-v2"
         )
         # Configura el LLM como GoogleGenAI (nuevo)
-        Settings.llm = GoogleGenAI(model="gemini-1.5-flash", api_key=GOOGLE_API_KEY)
+        Settings.llm = GoogleGenAI(model="gemini-2.0-flash-lite", api_key=GOOGLE_API_KEY)
         pdf_index = VectorStoreIndex.from_documents(documents)
         print("✅ PDF index loaded successfully.")
     except Exception as e:
@@ -189,7 +209,7 @@ def main():
     bot.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, message_handler))
     print("🤖 Bot is running...")
     bot.run_polling(allowed_updates=Update.ALL_TYPES)
-
+"""
     prompts = [
         "¿Qué son los riesgos laborales y por qué son importantes para una PYME?",
         "¿Qué normativa regula los riesgos laborales en España?",
@@ -209,6 +229,6 @@ def main():
     # Guarda resultados
     with open("test_results.json", "w", encoding="utf-8") as f:
         json.dump(results, f, indent=4, ensure_ascii=False)
-
+"""
 if __name__ == "__main__":
     main()
