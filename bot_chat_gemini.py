@@ -1,5 +1,3 @@
-
-# import re
 import os
 import PyPDF2
 import google.generativeai as genai
@@ -14,6 +12,7 @@ from dotenv import load_dotenv
 from telegram.constants import ParseMode
 
 import warnings
+
 warnings.filterwarnings("ignore", category=UserWarning, message="To support symlinks on Windows")
 
 # Load environment variables
@@ -26,9 +25,11 @@ PDF_DIRECTORY = "documentos"
 # Configure Gemini
 genai.configure(api_key=GOOGLE_API_KEY)
 
-# Store user messages
+# Store user messages and available links
 mensajes = {}
 pdf_index = None
+enlaces_disponibles = {}
+
 
 def guardar_en_json(user_id, user_message, bot_response):
     """Function to save a message in a JSON"""
@@ -55,6 +56,7 @@ def guardar_en_json(user_id, user_message, bot_response):
     except Exception as e:
         print(f"❌ Error saving to JSON: {e}")
 
+
 def handle_user_message(message):
     """Function to handle user messages"""
     user_id = message.from_user.id
@@ -62,6 +64,7 @@ def handle_user_message(message):
         mensajes[user_id] = {"messages": [{"role": "user", "content": message.text}]}
     else:
         mensajes[user_id]["messages"].append({"role": "user", "content": message.text})
+
 
 def extract_text_from_pdf(pdf_path):
     """Extract text from a PDF file"""
@@ -76,6 +79,7 @@ def extract_text_from_pdf(pdf_path):
         print(f"Error reading PDF {pdf_path}: {str(e)}")
     return text.strip()
 
+
 def query_pdf_index(index, query):
     """Query the index and return the response"""
     try:
@@ -86,71 +90,52 @@ def query_pdf_index(index, query):
         print(f"Error querying index: {str(e)}")
         return "No se pudo consultar la información de los documentos."
 
+
 def generate_response(message, pdf_index):
-    """Generate response using Gemini with concise, focused answers"""
+    """Generate response using Gemini with concise, focused answers and contextual links"""
     user_id = message.from_user.id
-    user_text = message.text.lower()  # Convertir a minúsculas para comparar
+    user_text = message.text.lower()
 
     if user_id not in mensajes:
         mensajes[user_id] = {"messages": []}
 
     mensajes[user_id]["messages"].append({"role": "user", "content": user_text})
 
-    # Lista de palabras clave para activar el índice
-    keywords = [
-        "riesgos", "laboral", "laborales", "prevención", "seguridad", "salud", "trabajo",
-        "ocupacional", "accidente", "enfermedad", "profesional", "físico", "químico",
-        "biológico", "ergonómico", "psicosocial", "caída", "atrapamiento", "quemadura",
-        "corte", "ruido", "vibración", "estrés", "fatiga", "normativa", "ley", "decreto",
-        "reglamento", "31/1995", "486/1997", "39/1997", "773/1997", "compliance",
-        "obligación", "inspección", "evaluación", "riesgo", "plan", "medida", "correctiva",
-        "preventiva", "formación", "capacitación", "protocolo", "vigilancia", "emergencia",
-        "evacuación", "equipo", "protección", "EPI", "maquinaria", "herramienta",
-        "instalación", "mantenimiento", "señalización", "PYME", "pequeña", "mediana",
-        "empresa", "autónomo", "negocio", "emprendedor", "construcción", "hostelería",
-        "industria", "oficina", "comercio", "transporte", "agricultura", "sanidad",
-        "taller", "almacén", "trabajador", "empleado", "personal", "contratista",
-        "jornada", "turno", "descanso", "exposición", "peligro", "incidente", "ergonomía",
-        "psicología", "ventilación", "iluminación", "temperatura"
-    ]
-
     # Determinar si la consulta requiere información del índice
     context = ""
+    keywords = [
+        "riesgos", "laboral", "laborales", "prevención", "seguridad", "salud", "trabajo",
+        "normativa", "ley", "decreto", "reglamento", "31/1995", "PYME"
+    ]
     if pdf_index and any(keyword in user_text for keyword in keywords):
         info_rag = query_pdf_index(pdf_index, user_text)
         context = f"Información adicional de documentos: {info_rag}\n\n"
-
-    # Determinar si la consulta requiere enlaces (por ejemplo, si menciona normativas o riesgos específicos)
-    include_links = any(keyword in user_text for keyword in ["normativa", "ley", "reglamento",
-                                                             "riesgos", "laboral", "seguridad",
-                                                             "salud", "prevención"])
 
     # Construir historial de conversación
     conversation_history = "\n".join(
         [f"{msg['role']}: {msg['content']}" for msg in mensajes[user_id]["messages"]]
     )
 
-    # Prompt ajustado para respuestas concisas y enfocadas
-    prompt = (f"{context}Historia de la conversación:\n{conversation_history}\n\nResponde como un "
-              f"consultor experto en riesgos laborales. Sé claro, conciso y responde SOLO a lo preguntado."
-              f" Usa un tono técnico si la pregunta lo requiere. Incluye enlaces a fuentes oficiales "
-              f"solo si la consulta menciona normativas o riesgos específicos. "
-              f"Limita la respuesta a 100-150 palabras."
-              f"Devuélveme SOLO texto plano, si necesitas enumerar una lista puedes usar números o guiones (-)."
-              f"Evita en cualquier caso el formato Markdown con los **Palabras**")
+    # Preparar lista de enlaces para el prompt
+    enlaces_texto = "\n".join([f"- {nombre}: {url}" for nombre, url in enlaces_disponibles.items()])
+
+    # Prompt ajustado para incluir enlaces contextualmente
+    prompt = (
+        f"{context}Historia de la conversación:\n{conversation_history}\n\n"
+        f"Responde como un consultor experto en riesgos laborales. Sé claro, conciso y responde SOLO a lo preguntado. "
+        f"Usa un tono técnico si la pregunta lo requiere. Si la respuesta se refiere a normativas, leyes o guías específicas, "
+        f"incluye enlaces relevantes de esta lista:\n{enlaces_texto}\n\n"
+        f"Limita la respuesta a 100-150 palabras. Devuélveme SOLO texto plano, si necesitas enumerar una lista usa guiones (-). "
+        f"Evita el formato Markdown con **Palabras**. Cuando incluyas un enlace, usa el formato 'Nombre (URL)'."
+    )
+
     try:
         model = genai.GenerativeModel('gemini-2.0-flash')
         response = model.generate_content(prompt)
-        bot_response = response.text
+        bot_response = response.text.strip()
 
-        # Añadir enlaces si es necesario
-        if include_links:
-            if "normativa" in user_text or "ley" in user_text:
-                bot_response += "\n- Referencia: Ley 31/1995 - BOE (https://www.boe.es/eli/es/l/1995/11/08/31/con)"
-            elif any(keyword in user_text for keyword in ["riesgos", "laboral", "seguridad", "salud", "prevención"]):
-                bot_response += "\n- Referencia: INSST - Prevención (https://www.insst.es/prevencion-de-riesgos-laborales)"
-
-        bot_response = bot_response.replace("*", "")  # <- Esta línea limpia los asteriscos
+        # Limpiar cualquier formato residual
+        bot_response = bot_response.replace("*", "")
 
         mensajes[user_id]["messages"].append({"role": "assistant", "content": bot_response})
         guardar_en_json(user_id, user_text, bot_response)
@@ -170,9 +155,10 @@ async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if len(response) > max_length:
         parts = [response[i:i + max_length] for i in range(0, len(response), max_length)]
         for part in parts:
-            await update.message.reply_text(part, parse_mode=ParseMode.MARKDOWN, disable_web_page_preview=False)  # opcional, para que no expanda enlaces
+            await update.message.reply_text(part, parse_mode=ParseMode.MARKDOWN, disable_web_page_preview=False)
     else:
         await update.message.reply_text(response)
+
 
 async def send_welcome_message(application):
     """Send a welcome message when the bot starts"""
@@ -214,7 +200,7 @@ def initialize_pdf_index():
         Settings.embed_model = HuggingFaceEmbedding(
             model_name="sentence-transformers/all-MiniLM-L6-v2"
         )
-        # Configura el LLM como GoogleGenAI (nuevo)
+        # Configura el LLM como GoogleGenAI
         Settings.llm = GoogleGenAI(model="gemini-2.0-flash-lite", api_key=GOOGLE_API_KEY)
         pdf_index = VectorStoreIndex.from_documents(documents)
         print("✅ PDF index loaded successfully.")
@@ -223,7 +209,17 @@ def initialize_pdf_index():
 
 
 def main():
+    global enlaces_disponibles
     initialize_pdf_index()
+
+    # Cargar enlaces desde el archivo JSON
+    try:
+        with open("enlaces.json", "r", encoding="utf-8") as f:
+            enlaces_disponibles = json.load(f)
+        print(f"✅ Enlaces cargados: {len(enlaces_disponibles)} enlaces disponibles.")
+    except Exception as e:
+        print(f"❌ Error al cargar enlaces.json: {e}")
+
     bot = Application.builder() \
         .token(TELEGRAM_TOKEN) \
         .post_init(send_welcome_message) \
