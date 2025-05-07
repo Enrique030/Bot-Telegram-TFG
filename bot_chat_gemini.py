@@ -2,6 +2,7 @@ import os
 import PyPDF2
 import google.generativeai as genai
 import json
+import requests
 from llama_index.core import VectorStoreIndex, Document
 from llama_index.core import Settings
 from llama_index.llms.google_genai import GoogleGenAI
@@ -19,6 +20,7 @@ warnings.filterwarnings("ignore", category=UserWarning, message="To support syml
 load_dotenv()
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
+SERPAPI_KEY = os.getenv("SERPAPI_KEY")  # Nueva variable para la API de SerpAPI
 JSON_FILE = "conversaciones.json"
 PDF_DIRECTORY = "documentos"
 
@@ -29,7 +31,6 @@ genai.configure(api_key=GOOGLE_API_KEY)
 mensajes = {}
 pdf_index = None
 enlaces_disponibles = {}
-
 
 def guardar_en_json(user_id, user_message, bot_response):
     """Function to save a message in a JSON"""
@@ -56,7 +57,6 @@ def guardar_en_json(user_id, user_message, bot_response):
     except Exception as e:
         print(f"❌ Error saving to JSON: {e}")
 
-
 def handle_user_message(message):
     """Function to handle user messages"""
     user_id = message.from_user.id
@@ -64,7 +64,6 @@ def handle_user_message(message):
         mensajes[user_id] = {"messages": [{"role": "user", "content": message.text}]}
     else:
         mensajes[user_id]["messages"].append({"role": "user", "content": message.text})
-
 
 def extract_text_from_pdf(pdf_path):
     """Extract text from a PDF file"""
@@ -79,7 +78,6 @@ def extract_text_from_pdf(pdf_path):
         print(f"Error reading PDF {pdf_path}: {str(e)}")
     return text.strip()
 
-
 def query_pdf_index(index, query):
     """Query the index and return the response"""
     try:
@@ -90,9 +88,28 @@ def query_pdf_index(index, query):
         print(f"Error querying index: {str(e)}")
         return "No se pudo consultar la información de los documentos."
 
+def get_web_links(query, api_key, num_links=2):
+    """Fetch dynamic web links using SerpAPI"""
+    endpoint = "https://serpapi.com/search"
+    params = {
+        "q": query,
+        "api_key": api_key,
+        "num": num_links,
+        "hl": "es",  # Resultados en español
+        "gl": "es"   # Región España
+    }
+    try:
+        response = requests.get(endpoint, params=params)
+        response.raise_for_status()
+        search_results = response.json()
+        links = [(result["title"], result["link"]) for result in search_results.get("organic_results", [])]
+        return links[:num_links]
+    except Exception as e:
+        print(f"Error fetching web links: {e}")
+        return []
 
 def generate_response(message, pdf_index):
-    """Generate response using Gemini with concise, focused answers and contextual links"""
+    """Generate response using Gemini with concise answers, contextual links, and dynamic web links"""
     user_id = message.from_user.id
     user_text = message.text.lower()
 
@@ -101,7 +118,7 @@ def generate_response(message, pdf_index):
 
     mensajes[user_id]["messages"].append({"role": "user", "content": user_text})
 
-    # Determinar si la consulta requiere información del índice
+    # Determine if the query requires information from the index
     context = ""
     keywords = [
         "riesgos", "laboral", "laborales", "prevención", "seguridad", "salud", "trabajo",
@@ -111,22 +128,22 @@ def generate_response(message, pdf_index):
         info_rag = query_pdf_index(pdf_index, user_text)
         context = f"Información adicional de documentos: {info_rag}\n\n"
 
-    # Construir historial de conversación
+    # Build conversation history
     conversation_history = "\n".join(
         [f"{msg['role']}: {msg['content']}" for msg in mensajes[user_id]["messages"]]
     )
 
-    # Preparar lista de enlaces para el prompt
+    # Prepare list of available links for the prompt
     enlaces_texto = "\n".join([f"- {nombre}: {url}" for nombre, url in enlaces_disponibles.items()])
 
-    # Prompt ajustado para incluir enlaces contextualmente
+    # Adjusted prompt to include links in Markdown format
     prompt = (
         f"{context}Historia de la conversación:\n{conversation_history}\n\n"
         f"Responde como un consultor experto en riesgos laborales. Sé claro, conciso y responde SOLO a lo preguntado. "
         f"Usa un tono técnico si la pregunta lo requiere. Si la respuesta se refiere a normativas, leyes o guías específicas, "
         f"incluye enlaces relevantes de esta lista:\n{enlaces_texto}\n\n"
         f"Limita la respuesta a 100-150 palabras. Devuélveme SOLO texto plano, si necesitas enumerar una lista usa guiones (-). "
-        f"Evita el formato Markdown con **Palabras**. Cuando incluyas un enlace, usa el formato 'Nombre (URL)'."
+        f"Evita el formato Markdown con **Palabras**. Cuando incluyas un enlace, usa el formato Markdown: [Nombre](URL)."
     )
 
     try:
@@ -134,8 +151,16 @@ def generate_response(message, pdf_index):
         response = model.generate_content(prompt)
         bot_response = response.text.strip()
 
-        # Limpiar cualquier formato residual
+        # Clean any residual formatting
         bot_response = bot_response.replace("*", "")
+
+        # Add dynamic web links using SerpAPI
+        if SERPAPI_KEY:
+            search_query = f"{user_text} riesgos laborales OR seguridad laboral OR prevención de riesgos"
+            web_links = get_web_links(search_query, SERPAPI_KEY)
+            if web_links:
+                links_text = "\n".join([f"- [{title}]({url})" for title, url in web_links])
+                bot_response += f"\n\nPara más información, consulta estos enlaces:\n{links_text}"
 
         mensajes[user_id]["messages"].append({"role": "assistant", "content": bot_response})
         guardar_en_json(user_id, user_text, bot_response)
@@ -143,22 +168,20 @@ def generate_response(message, pdf_index):
     except Exception as e:
         return f"Error al generar respuesta: {str(e)}"
 
-
 async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Handle incoming Telegram messages"""
     print(f"Message received from ID: {update.message.chat_id}")
     handle_user_message(update.message)
     response = generate_response(update.message, pdf_index)
 
-    # Divide la respuesta en fragmentos
+    # Split the response into chunks if necessary
     max_length = 4000
     if len(response) > max_length:
         parts = [response[i:i + max_length] for i in range(0, len(response), max_length)]
         for part in parts:
             await update.message.reply_text(part, parse_mode=ParseMode.MARKDOWN, disable_web_page_preview=False)
     else:
-        await update.message.reply_text(response)
-
+        await update.message.reply_text(response, parse_mode=ParseMode.MARKDOWN, disable_web_page_preview=False)
 
 async def send_welcome_message(application):
     """Send a welcome message when the bot starts"""
@@ -166,7 +189,6 @@ async def send_welcome_message(application):
     welcome_message = ("¡Hola! 😊 Soy Prevencio-Bot, tu asistente de riesgos laborales. "
                        "Pregúntame lo que necesites sobre seguridad en PYMES.")
     await application.bot.send_message(chat_id=user_id, text=welcome_message)
-
 
 def initialize_pdf_index():
     """Initialize the PDF index using Hugging Face embeddings and Gemini LLM"""
@@ -196,23 +218,22 @@ def initialize_pdf_index():
         return
 
     try:
-        # Configura el modelo de embeddings
+        # Configure embedding model
         Settings.embed_model = HuggingFaceEmbedding(
             model_name="sentence-transformers/all-MiniLM-L6-v2"
         )
-        # Configura el LLM como GoogleGenAI
+        # Configure LLM as GoogleGenAI
         Settings.llm = GoogleGenAI(model="gemini-2.0-flash-lite", api_key=GOOGLE_API_KEY)
         pdf_index = VectorStoreIndex.from_documents(documents)
         print("✅ PDF index loaded successfully.")
     except Exception as e:
         print(f"❌ Error creating index: {str(e)}")
 
-
 def main():
     global enlaces_disponibles
     initialize_pdf_index()
 
-    # Cargar enlaces desde el archivo JSON
+    # Load links from JSON file
     try:
         with open("enlaces.json", "r", encoding="utf-8") as f:
             enlaces_disponibles = json.load(f)
@@ -228,7 +249,6 @@ def main():
     bot.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, message_handler))
     print("🤖 Bot is running...")
     bot.run_polling(allowed_updates=Update.ALL_TYPES)
-
 
 if __name__ == "__main__":
     main()
