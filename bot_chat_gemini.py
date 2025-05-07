@@ -1,8 +1,12 @@
+
+# Importación de bibliotecas necesarias
 import os
 import PyPDF2
 import google.generativeai as genai
 import json
+import warnings
 import requests
+
 from llama_index.core import VectorStoreIndex, Document
 from llama_index.core import Settings
 from llama_index.llms.google_genai import GoogleGenAI
@@ -12,61 +16,66 @@ from telegram import Update
 from dotenv import load_dotenv
 from telegram.constants import ParseMode
 
-import warnings
-
+# Ignorar advertencias específicas de enlaces simbólicos en Windows
 warnings.filterwarnings("ignore", category=UserWarning, message="To support symlinks on Windows")
 
-# Load environment variables
+# Cargar variables de entorno desde el archivo .env
 load_dotenv()
-GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
-TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")
-SERPAPI_KEY = os.getenv("SERPAPI_KEY")  # Nueva variable para la API de SerpAPI
-JSON_FILE = "conversaciones.json"
-PDF_DIRECTORY = "documentos"
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")  # Clave API de Google
+TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")  # Token del bot de Telegram
+SERPAPI_KEY = os.getenv("SERPAPI_KEY")        # Clave API de SerpAPI
+JSON_FILE = "conversaciones.json"             # Archivo para almacenar conversaciones
+PDF_DIRECTORY = "documentos"                  # Directorio de archivos PDF
 
-# Configure Gemini
+# Configurar la API de Google Gemini
 genai.configure(api_key=GOOGLE_API_KEY)
 
-# Store user messages and available links
-mensajes = {}
-pdf_index = None
-enlaces_disponibles = {}
+# Diccionarios para almacenar mensajes de usuarios y enlaces disponibles
+mensajes = {}                    # Historial de mensajes por usuario
+pdf_index = None                 # Índice de búsqueda de PDFs
+enlaces_disponibles = {}         # Enlaces relevantes cargados
 
 def guardar_en_json(user_id, user_message, bot_response):
-    """Function to save a message in a JSON"""
+    """Función que guarda la conversación del usuario en un archivo JSON"""
     try:
+        # Verificar si el archivo JSON existe
         if os.path.exists(JSON_FILE):
             try:
                 with open(JSON_FILE, "r", encoding="utf-8") as f:
                     data = json.load(f)
             except json.JSONDecodeError:
-                print("⚠️ Empty or corrupted JSON file, it will be reset.")
+                print("⚠️ Archivo JSON vacío o corrupto, se reiniciará")
                 data = {}
         else:
             data = {}
 
+        # Asegurar que el user_id esté en los datos
         if str(user_id) not in data:
             data[str(user_id)] = []
 
+        # Agregar la conversación al historial
         data[str(user_id)].append({"usuario": user_message, "bot": bot_response})
 
+        # Guardar los datos actualizados en el archivo JSON
         with open(JSON_FILE, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=4, ensure_ascii=False)
 
-        print(f"✅ Conversation saved in JSON: {user_id}")
+        print(f"✅ Conversación guardada en JSON para el usuario: {user_id}")
     except Exception as e:
-        print(f"❌ Error saving to JSON: {e}")
+        print(f"❌ Error al guardar en JSON: {e}")
+
 
 def handle_user_message(message):
-    """Function to handle user messages"""
+    """Función que almacena los mensajes de los usuarios en el diccionario de mensajes"""
     user_id = message.from_user.id
     if user_id not in mensajes:
         mensajes[user_id] = {"messages": [{"role": "user", "content": message.text}]}
     else:
         mensajes[user_id]["messages"].append({"role": "user", "content": message.text})
 
+
 def extract_text_from_pdf(pdf_path):
-    """Extract text from a PDF file"""
+    """Función que extrae el texto de un archivo PDF"""
     text = ""
     try:
         with open(pdf_path, 'rb') as file:
@@ -75,28 +84,30 @@ def extract_text_from_pdf(pdf_path):
                 page_text = page.extract_text() or ""
                 text += page_text + "\n"
     except Exception as e:
-        print(f"Error reading PDF {pdf_path}: {str(e)}")
+        print(f"❌ Error al leer el PDF {pdf_path}: {str(e)}")
     return text.strip()
 
+
 def query_pdf_index(index, query):
-    """Query the index and return the response"""
+    """Función que consulta el índice de PDFs y devuelve la respuesta"""
     try:
         query_engine = index.as_query_engine()
         response = query_engine.query(query)
         return str(response)
     except Exception as e:
-        print(f"Error querying index: {str(e)}")
-        return "No se pudo consultar la información de los documentos."
+        print(f"❌ Error al consultar el índice: {str(e)}")
+        return "No se pudo consultar la información de los documentos"
+
 
 def get_web_links(query, api_key, num_links=2):
-    """Fetch dynamic web links using SerpAPI"""
+    """Función que obtiene enlaces web dinámicos usando SerpAPI"""
     endpoint = "https://serpapi.com/search"
     params = {
         "q": query,
         "api_key": api_key,
         "num": num_links,
         "hl": "es",  # Resultados en español
-        "gl": "es"   # Región España
+        "gl": "es"   # Región de España
     }
     try:
         response = requests.get(endpoint, params=params)
@@ -105,11 +116,12 @@ def get_web_links(query, api_key, num_links=2):
         links = [(result["title"], result["link"]) for result in search_results.get("organic_results", [])]
         return links[:num_links]
     except Exception as e:
-        print(f"Error fetching web links: {e}")
+        print(f"❌ Error al obtener enlaces web: {e}")
         return []
 
-def generate_response(message, pdf_index):
-    """Generate response using Gemini with concise answers, contextual links, and dynamic web links"""
+
+def generate_response(message, pdfs_index):
+    """Función que genera una respuesta usando Gemini con respuestas concisas y enlaces contextuales"""
     user_id = message.from_user.id
     user_text = message.text.lower()
 
@@ -118,25 +130,37 @@ def generate_response(message, pdf_index):
 
     mensajes[user_id]["messages"].append({"role": "user", "content": user_text})
 
-    # Determine if the query requires information from the index
+    # Determinar si la consulta requiere información del índice
     context = ""
     keywords = [
         "riesgos", "laboral", "laborales", "prevención", "seguridad", "salud", "trabajo",
-        "normativa", "ley", "decreto", "reglamento", "31/1995", "PYME"
+        "ocupacional", "accidente", "enfermedad", "profesional", "físico", "químico",
+        "biológico", "ergonómico", "psicosocial", "caída", "atrapamiento", "quemadura",
+        "corte", "ruido", "vibración", "estrés", "fatiga", "normativa", "ley", "decreto",
+        "reglamento", "31/1995", "486/1997", "39/1997", "773/1997", "compliance",
+        "obligación", "inspección", "evaluación", "riesgo", "plan", "medida", "correctiva",
+        "preventiva", "formación", "capacitación", "protocolo", "vigilancia", "emergencia",
+        "evacuación", "equipo", "protección", "EPI", "maquinaria", "herramienta",
+        "instalación", "mantenimiento", "señalización", "PYME", "pequeña", "mediana",
+        "empresa", "autónomo", "negocio", "emprendedor", "construcción", "hostelería",
+        "industria", "oficina", "comercio", "transporte", "agricultura", "sanidad",
+        "taller", "almacén", "trabajador", "empleado", "personal", "contratista",
+        "jornada", "turno", "descanso", "exposición", "peligro", "incidente", "ergonomía",
+        "psicología", "ventilación", "iluminación", "temperatura"
     ]
-    if pdf_index and any(keyword in user_text for keyword in keywords):
-        info_rag = query_pdf_index(pdf_index, user_text)
+    if pdfs_index and any(keyword in user_text for keyword in keywords):
+        info_rag = query_pdf_index(pdfs_index, user_text)
         context = f"Información adicional de documentos: {info_rag}\n\n"
 
-    # Build conversation history
+    # Construir el historial de la conversación
     conversation_history = "\n".join(
         [f"{msg['role']}: {msg['content']}" for msg in mensajes[user_id]["messages"]]
     )
 
-    # Prepare list of available links for the prompt
+    # Preparar la lista de enlaces disponibles para el prompt
     enlaces_texto = "\n".join([f"- {nombre}: {url}" for nombre, url in enlaces_disponibles.items()])
 
-    # Adjusted prompt to include links in Markdown format
+    # Prompt ajustado para incluir enlaces en formato Markdown
     prompt = (
         f"{context}Historia de la conversación:\n{conversation_history}\n\n"
         f"Responde como un consultor experto en riesgos laborales. Sé claro, conciso y responde SOLO a lo preguntado. "
@@ -151,10 +175,10 @@ def generate_response(message, pdf_index):
         response = model.generate_content(prompt)
         bot_response = response.text.strip()
 
-        # Clean any residual formatting
+        # Limpiar cualquier formato residual
         bot_response = bot_response.replace("*", "")
 
-        # Add dynamic web links using SerpAPI
+        # Agregar enlaces web dinámicos usando SerpAPI
         if SERPAPI_KEY:
             search_query = f"{user_text} riesgos laborales OR seguridad laboral OR prevención de riesgos"
             web_links = get_web_links(search_query, SERPAPI_KEY)
@@ -166,15 +190,16 @@ def generate_response(message, pdf_index):
         guardar_en_json(user_id, user_text, bot_response)
         return bot_response
     except Exception as e:
-        return f"Error al generar respuesta: {str(e)}"
+        return f"❌ Error al generar respuesta: {str(e)}"
+
 
 async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Handle incoming Telegram messages"""
-    print(f"Message received from ID: {update.message.chat_id}")
+    """Función que maneja los mensajes recibidos en Telegram"""
+    print(f"📩 Mensaje recibido del ID: {update.message.chat_id}")
     handle_user_message(update.message)
     response = generate_response(update.message, pdf_index)
 
-    # Split the response into chunks if necessary
+    # Dividir la respuesta en fragmentos
     max_length = 4000
     if len(response) > max_length:
         parts = [response[i:i + max_length] for i in range(0, len(response), max_length)]
@@ -183,57 +208,63 @@ async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         await update.message.reply_text(response, parse_mode=ParseMode.MARKDOWN, disable_web_page_preview=False)
 
+
 async def send_welcome_message(application):
-    """Send a welcome message when the bot starts"""
-    user_id = "7568207284"  # Replace with your ID
-    welcome_message = ("¡Hola! 😊 Soy Prevencio-Bot, tu asistente de riesgos laborales. "
-                       "Pregúntame lo que necesites sobre seguridad en PYMES.")
+    """Función que envía un mensaje de bienvenida cuando el bot se inicia"""
+    user_id = "7568207284"  # Reemplazar con el ID del usuario
+    welcome_message = (
+        "¡Hola! 😊 Soy Prevencio-Bot, tu asistente de riesgos laborales. "
+        "Pregúntame lo que necesites sobre seguridad en PYMES."
+    )
     await application.bot.send_message(chat_id=user_id, text=welcome_message)
 
+
 def initialize_pdf_index():
-    """Initialize the PDF index using Hugging Face embeddings and Gemini LLM"""
+    """Función que inicializa el índice de PDFs usando embeddings de Hugging Face y el LLM de Gemini"""
     global pdf_index
     if not os.path.exists(PDF_DIRECTORY):
-        print(f"⚠️ Directory '{PDF_DIRECTORY}' does not exist.")
+        print(f"⚠️ El directorio '{PDF_DIRECTORY}' no existe.")
         return
 
     pdf_files = [f for f in os.listdir(PDF_DIRECTORY) if f.endswith(".pdf")]
     if not pdf_files:
-        print(f"⚠️ No PDFs found in '{PDF_DIRECTORY}'.")
+        print(f"⚠️ No se encontraron PDFs en '{PDF_DIRECTORY}'.")
         return
 
-    print(f"📂 Found {len(pdf_files)} PDFs. Processing...")
+    print(f"📂 Encontrados {len(pdf_files)} PDFs. Procesando...")
     documents = []
     for file in pdf_files:
         file_path = os.path.join(PDF_DIRECTORY, file)
         text = extract_text_from_pdf(file_path)
         if text.strip():
             documents.append(Document(text=text))
-            print(f"✅ Extracted text from '{file}' ({len(text)} characters).")
+            print(f"✅ Texto extraído de '{file}' ({len(text)} caracteres).")
         else:
-            print(f"⚠️ PDF '{file}' has no extractable text.")
+            print(f"⚠️ El PDF '{file}' no tiene texto extraíble.")
 
     if not documents:
-        print("❌ No text could be extracted from any PDF.")
+        print("❌ No se pudo extraer texto de ningún PDF.")
         return
 
     try:
-        # Configure embedding model
+        # Configurar el modelo de embeddings
         Settings.embed_model = HuggingFaceEmbedding(
             model_name="sentence-transformers/all-MiniLM-L6-v2"
         )
-        # Configure LLM as GoogleGenAI
+        # Configurar el LLM como GoogleGenAI
         Settings.llm = GoogleGenAI(model="gemini-2.0-flash-lite", api_key=GOOGLE_API_KEY)
         pdf_index = VectorStoreIndex.from_documents(documents)
-        print("✅ PDF index loaded successfully.")
+        print("✅ Índice de PDFs cargado exitosamente.")
     except Exception as e:
-        print(f"❌ Error creating index: {str(e)}")
+        print(f"❌ Error al crear el índice: {str(e)}")
+
 
 def main():
+    """Función principal para inicializar el bot y sus componentes"""
     global enlaces_disponibles
     initialize_pdf_index()
 
-    # Load links from JSON file
+    # Cargar enlaces desde el archivo JSON
     try:
         with open("enlaces.json", "r", encoding="utf-8") as f:
             enlaces_disponibles = json.load(f)
@@ -241,14 +272,16 @@ def main():
     except Exception as e:
         print(f"❌ Error al cargar enlaces.json: {e}")
 
+    # Configurar y ejecutar el bot de Telegram
     bot = Application.builder() \
         .token(TELEGRAM_TOKEN) \
         .post_init(send_welcome_message) \
         .build()
 
     bot.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, message_handler))
-    print("🤖 Bot is running...")
+    print("🤖 El bot está en ejecución...")
     bot.run_polling(allowed_updates=Update.ALL_TYPES)
+
 
 if __name__ == "__main__":
     main()

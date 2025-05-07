@@ -1,6 +1,4 @@
 
-# Librerías para el bot_antiguo.py
-
 # Librería para interactuar con servicios web y manejar respuestas
 requests
 
