@@ -214,7 +214,7 @@ async def send_welcome_message(application):
     user_id = "7568207284"  # Reemplazar con el ID del usuario
     welcome_message = (
         "¡Hola! 😊 Soy Prevencio-Bot, tu asistente de riesgos laborales. "
-        "Pregúntame lo que necesites sobre seguridad en PYMES."
+        "Pregúntame lo que necesites sobre la seguridad en las Pymes."
     )
     await application.bot.send_message(chat_id=user_id, text=welcome_message)
 
