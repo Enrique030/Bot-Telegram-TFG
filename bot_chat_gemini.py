@@ -21,11 +21,12 @@ warnings.filterwarnings("ignore", category=UserWarning, message="To support syml
 
 # Cargar variables de entorno desde el archivo .env
 load_dotenv()
-GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")  # Clave API de Google
-TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")  # Token del bot de Telegram
-SERPAPI_KEY = os.getenv("SERPAPI_KEY")        # Clave API de SerpAPI
-JSON_FILE = "conversaciones.json"             # Archivo para almacenar conversaciones
-PDF_DIRECTORY = "documentos"                  # Directorio de archivos PDF
+TELEGRAM_USER_ID = os.getenv("TELEGRAM_USER_ID")    # ID de Telegram
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")        # Clave API de Google
+TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")        # Token del bot de Telegram
+SERPAPI_KEY = os.getenv("SERPAPI_KEY")              # Clave API de SerpAPI
+JSON_FILE = "conversaciones.json"                   # Archivo para almacenar conversaciones
+PDF_DIRECTORY = "documentos"                        # Directorio de archivos PDF
 
 # Configurar la API de Google Gemini
 genai.configure(api_key=GOOGLE_API_KEY)
@@ -211,12 +212,11 @@ async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def send_welcome_message(application):
     """Función que envía un mensaje de bienvenida cuando el bot se inicia"""
-    user_id = "7568207284"  # Reemplazar con el ID del usuario
     welcome_message = (
         "¡Hola! 😊 Soy Prevencio-Bot, tu asistente de riesgos laborales. "
         "Pregúntame lo que necesites sobre la seguridad en las Pymes."
     )
-    await application.bot.send_message(chat_id=user_id, text=welcome_message)
+    await application.bot.send_message(chat_id=TELEGRAM_USER_ID, text=welcome_message)
 
 
 def initialize_pdf_index():
