@@ -67,3 +67,10 @@ Guarda este token en un lugar seguro porque lo necesitarás para interactuar con
 3. Accede a tu API Key, una vez dentro:
     - Ve a tu panel de control (dashboard): <https://serpapi.com/dashboard>.
     - Verás tu API Key personal listada ahí.
+
+## Herramientas utilizadas
+Este trabajo ha sido desarrollado utilizando las siguientes herramientas:
+- Pycharm Professional v2025.1.1 (Licencia adquirida gratuita gracias a la colaboración con la universidad)
+- Python 3.13
+- Telegram Desktop
+- Sistema operativo: Windows 11
