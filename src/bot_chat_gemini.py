@@ -266,7 +266,7 @@ def main():
 
     # Cargar enlaces desde el archivo JSON
     try:
-        with open("enlaces.json", "r", encoding="utf-8") as f:
+        with open("../enlaces.json", "r", encoding="utf-8") as f:
             enlaces_disponibles = json.load(f)
         print(f"✅ Enlaces cargados: {len(enlaces_disponibles)} enlaces disponibles.")
     except Exception as e:
