@@ -24,7 +24,7 @@ en tu terminal.
 9. Abre Telegram y conversa con tu asistente.
 
 ## Pasos para activar el modo desarrollador en Windows <img src="img/windows_logo.png" width="25">
-1. Ve a la configuración del sistema <img src="img/configuration_logo.png" width="15"/>
+1. Ve a la configuración del sistema <img src="img/configuration_logo.png" width="20"/>
 2. Accede a la pestaña 'Sistema'
 3. Busca y accede a la opción 'Para programadores'
 4. Activa la opción 'Modo para desarrolladores'
@@ -65,7 +65,7 @@ Guarda este token en un lugar seguro porque lo necesitarás para interactuar con
 ## Pasos para crear una API KEY de SerpAPI <img src="img/SerpAPI_logo.png" width="20">
 1. Ve al sitio oficial de SerpAPI <https://serpapi.com/>
 2. Crea una cuenta o inicia sesión
-    - Puedes registrarte con email, Google <img src="img/google_logo.png" width="15"> o GitHub.
+    - Puedes registrarte con email, Google <img src="img/google_logo.png" width="20"> o GitHub.
     - Confirma tu correo si es necesario.
 3. Accede a tu API Key, una vez dentro:
     - Ve a tu panel de control (dashboard): <https://serpapi.com/dashboard>.
@@ -73,7 +73,7 @@ Guarda este token en un lugar seguro porque lo necesitarás para interactuar con
 
 ## Herramientas utilizadas
 Este trabajo ha sido desarrollado utilizando las siguientes herramientas:
-- Pycharm Professional v2025.1.1 (Licencia adquirida gratuita gracias a la colaboración con la universidad) <img src="img/pycharm_logo.png" width="25">
-- Python 3.13 <img src="img/python_logo.png" width="20">
-- Telegram Desktop <img src="img/telegram_logo.png" width="15">
-- Sistema operativo: Windows 11 <img src="img/windows_logo.png" width="20">
+- Pycharm Professional v2025.1.1 (Licencia adquirida gratuita gracias a la colaboración con la universidad) <img src="img/pycharm_logo.png" width="30">
+- Python 3.13 <img src="img/python_logo.png" width="25">
+- Telegram Desktop <img src="img/telegram_logo.png" width="20">
+- Sistema operativo: Windows 11 <img src="img/windows_logo.png" width="25">
