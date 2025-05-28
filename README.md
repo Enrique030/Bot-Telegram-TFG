@@ -53,8 +53,7 @@ Guarda este token en un lugar seguro porque lo necesitarás para interactuar con
 2. En la barra de búsqueda de Telegram, escribe @userinfobot y selecciona el bot que aparezca.
 ![](img/userinfobot.png)
 3. Haz clic en "Iniciar" para comenzar la conversación con el bot.
-4. El bot te mostrará tu ID de usuario.
-5. Reenvía el mensaje del usuario a @userinfobot. El bot te mostrará el ID de ese usuario. 
+4. El bot te mostrará tu ID de usuario que debes sustituir en el archivo '.env' del código.
 
 ## Pasos para crear una API KEY de Google Gemini <img src="img/gemini_logo.png" width="20">
 1. Ve a <https://makersuite.google.com/app> 
