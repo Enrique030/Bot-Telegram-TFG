@@ -26,7 +26,7 @@ GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")        # Clave API de Google
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")        # Token del bot de Telegram
 SERPAPI_KEY = os.getenv("SERPAPI_KEY")              # Clave API de SerpAPI
 JSON_FILE = "conversaciones.json"                   # Archivo para almacenar conversaciones
-PDF_DIRECTORY = "documentos"                        # Directorio de archivos PDF
+PDF_DIRECTORY = "../documentos"                     # Directorio de archivos PDF
 
 # Configurar la API de Google Gemini
 genai.configure(api_key=GOOGLE_API_KEY)
@@ -147,7 +147,7 @@ def generate_response(message, pdfs_index):
         "industria", "oficina", "comercio", "transporte", "agricultura", "sanidad",
         "taller", "almacén", "trabajador", "empleado", "personal", "contratista",
         "jornada", "turno", "descanso", "exposición", "peligro", "incidente", "ergonomía",
-        "psicología", "ventilación", "iluminación", "temperatura"
+        "psicología", "ventilación", "iluminación", "temperatura, incendio, extintor"
     ]
     if pdfs_index and any(keyword in user_text for keyword in keywords):
         info_rag = query_pdf_index(pdfs_index, user_text)
@@ -164,11 +164,16 @@ def generate_response(message, pdfs_index):
     # Prompt ajustado para incluir enlaces en formato Markdown
     prompt = (
         f"{context}Historia de la conversación:\n{conversation_history}\n\n"
-        f"Responde como un consultor experto en riesgos laborales. Sé claro, conciso y responde SOLO a lo preguntado. "
-        f"Usa un tono técnico si la pregunta lo requiere. Si la respuesta se refiere a normativas, leyes o guías específicas, "
-        f"incluye enlaces relevantes de esta lista:\n{enlaces_texto}\n\n"
-        f"Limita la respuesta a 100-150 palabras. Devuélveme SOLO texto plano, si necesitas enumerar una lista usa guiones (-). "
-        f"Evita el formato Markdown con **Palabras**. Cuando incluyas un enlace, usa el formato Markdown: [Nombre](URL)."
+        f"Responde como un consultor experto en riesgos laborales."
+        f"Sé claro, conciso y responde SOLO a lo preguntado."
+        f"Usa un tono técnico si la pregunta lo requiere, si la respuesta se refiere a normativas, leyes o guías específicas."
+        f"Usa un tono más conversacional cuando la pregunta no requiera un contexto técnico para ser más cercano con el usuario."
+        f"Sé proactivo para anticiparse a los problemas y necesidades que puedan tener los usuarios preguntándoles al final de la respuesta si quiren saber o profundizar más en el tema que se está tratando."
+        f"Incluye enlaces relevantes de esta lista:\n{enlaces_texto}\n\n"
+        f"Limita la respuesta a 100-150 palabras."
+        f"Devuélveme SOLO texto plano, si necesitas enumerar una lista usa guiones (-)."
+        f"Evita el formato Markdown con **Palabras**. "
+        f"Cuando incluyas un enlace, usa el formato Markdown: [Nombre](URL)."
     )
 
     try:
