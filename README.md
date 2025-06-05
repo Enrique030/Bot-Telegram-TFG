@@ -113,7 +113,7 @@ Guarda este token en un lugar seguro porque lo necesitarás para interactuar con
 ## Cómo instalar Telegram Desktop <img src="img/telegram_logo.png" width="20">
 1. Descarga la aplicación:
    - Ve a https://desktop.telegram.org/. 
-     - Selecciona la versión adecuada para tu sistema operativo (Windows, macOS o Linux). 
+   - Selecciona la versión adecuada para tu sistema operativo (Windows, macOS o Linux). 
    - Haz clic en el botón de descarga. 
 2. Instala la aplicación:
    - Una vez descargado, abre el archivo de instalación. 
@@ -141,8 +141,7 @@ Guarda este token en un lugar seguro porque lo necesitarás para interactuar con
 
 ## Herramientas utilizadas
 Este trabajo ha sido desarrollado utilizando las siguientes herramientas:
-- Pycharm Professional v2025.1.1 (Licencia adquirida gratuita gracias a la colaboración con la universidad)
-<img src="img/pycharm_logo.png" width="30">
+- Pycharm Professional v2025.1.1 (Licencia adquirida gratuita gracias a la colaboración con la universidad) <img src="img/pycharm_logo.png" width="30">
 - Python 3.13 <img src="img/python_logo.png" width="25">
 - Telegram Desktop <img src="img/telegram_logo.png" width="20">
 - Sistema operativo: Windows 11 <img src="img/windows_logo.png" width="25">

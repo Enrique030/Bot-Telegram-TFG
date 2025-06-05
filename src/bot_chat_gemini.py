@@ -26,7 +26,7 @@ GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")        # Clave API de Google
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")        # Token del bot de Telegram
 SERPAPI_KEY = os.getenv("SERPAPI_KEY")              # Clave API de SerpAPI
 JSON_FILE = "conversaciones.json"                   # Archivo para almacenar conversaciones
-PDF_DIRECTORY = "../documentos"                     # Directorio de archivos PDF
+PDF_DIRECTORY = "../pdfs"                           # Directorio de archivos PDF
 
 # Configurar la API de Google Gemini
 genai.configure(api_key=GOOGLE_API_KEY)
@@ -97,7 +97,7 @@ def query_pdf_index(index, query):
         return str(response)
     except Exception as e:
         print(f"❌ Error al consultar el índice: {str(e)}")
-        return "No se pudo consultar la información de los documentos"
+        return "No se pudo consultar la información de los pdfs"
 
 
 def get_web_links(query, api_key, num_links=2):
@@ -151,7 +151,7 @@ def generate_response(message, pdfs_index):
     ]
     if pdfs_index and any(keyword in user_text for keyword in keywords):
         info_rag = query_pdf_index(pdfs_index, user_text)
-        context = f"Información adicional de documentos: {info_rag}\n\n"
+        context = f"Información adicional de pdfs: {info_rag}\n\n"
 
     # Construir el historial de la conversación
     conversation_history = "\n".join(
