@@ -1,4 +1,3 @@
-
 # Importación de bibliotecas necesarias
 import os
 import PyPDF2
@@ -25,7 +24,9 @@ TELEGRAM_USER_ID = os.getenv("TELEGRAM_USER_ID")    # ID de Telegram
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")        # Clave API de Google
 TELEGRAM_TOKEN = os.getenv("TELEGRAM_TOKEN")        # Token del bot de Telegram
 SERPAPI_KEY = os.getenv("SERPAPI_KEY")              # Clave API de SerpAPI
-JSON_FILE = "conversaciones.json"                   # Archivo para almacenar conversaciones
+
+JSON_FILE = "data/conversaciones.json"
+
 PDF_DIRECTORY = "../pdfs"                           # Directorio de archivos PDF
 
 # Configurar la API de Google Gemini
@@ -44,10 +45,11 @@ def guardar_en_json(user_id, user_message, bot_response):
             try:
                 with open(JSON_FILE, "r", encoding="utf-8") as f:
                     data = json.load(f)
-            except json.JSONDecodeError:
-                print("⚠️ Archivo JSON vacío o corrupto, se reiniciará")
+            except (json.JSONDecodeError, IOError):
+                print("⚠️ Archivo JSON vacío o corrupto, reiniciando.")
                 data = {}
         else:
+            print("📂 Archivo JSON no encontrado. Creando nuevo.")
             data = {}
 
         # Asegurar que el user_id esté en los datos
@@ -61,7 +63,7 @@ def guardar_en_json(user_id, user_message, bot_response):
         with open(JSON_FILE, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=4, ensure_ascii=False)
 
-        print(f"✅ Conversación guardada en JSON para el usuario: {user_id}")
+        print(f"✅ Conversación guardada exitosamente en {JSON_FILE} para el usuario: {user_id}")
     except Exception as e:
         print(f"❌ Error al guardar en JSON: {e}")
 
@@ -169,11 +171,17 @@ def generate_response(message, pdfs_index):
         f"Usa un tono técnico si la pregunta lo requiere, si la respuesta se refiere a normativas, leyes o guías específicas."
         f"Usa un tono más conversacional cuando la pregunta no requiera un contexto técnico para ser más cercano con el usuario."
         f"Sé proactivo para anticiparse a los problemas y necesidades que puedan tener los usuarios preguntándoles al final de la respuesta si quiren saber o profundizar más en el tema que se está tratando."
+        f"Si le haces una pregunta al usuario para profundizar más sobre el tema que se está hablando, utiliza la pregunta y la respuesta que te da éste para seguir la conversación. No repitas el mismo mensaje."
         f"Incluye enlaces relevantes de esta lista:\n{enlaces_texto}\n\n"
         f"Limita la respuesta a 100-150 palabras."
+        f"Ajusta la respuesta al sector del que se está hablando."
         f"Devuélveme SOLO texto plano, si necesitas enumerar una lista usa guiones (-)."
-        f"Evita el formato Markdown con **Palabras**. "
+        f"Evita el formato Markdown con **Palabras**."
         f"Cuando incluyas un enlace, usa el formato Markdown: [Nombre](URL)."
+        f"Por ejemplo si el usuario te pide que le muestres las conversaciones de un día en concreto, muéstrale las conversaciones de ese día, en este caso no incluyas el límite de palabras en la respuesta."
+        f"Ten la capacidad de entablar una conversación con el usuario si es necesario, respondiendo a las preguntas que te hagan y las que tú le hagas al usuario si éste te confirma que le respondas de alguna forma."
+        f"Si el usuario te da una consulta ambigua, responde de forma general."
+        f"Si el usuario te da una consulta que no tiene que ver nada con los riesgos laborales, indica que no tienes la capacidad de reponder a esa consulta porque solo eres un experto en riesgos laborales."
     )
 
     try:
@@ -219,7 +227,7 @@ async def send_welcome_message(application):
     """Función que envía un mensaje de bienvenida cuando el bot se inicia"""
     welcome_message = (
         "¡Hola! 😊 Soy Prevencio-Bot, tu asistente de riesgos laborales. "
-        "Pregúntame lo que necesites sobre la seguridad en las Pymes."
+        "Pregúntame lo que necesites sobre la seguridad en las PYMEs."
     )
     await application.bot.send_message(chat_id=TELEGRAM_USER_ID, text=welcome_message)
 

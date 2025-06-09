@@ -9,7 +9,6 @@ from src.bot_chat_gemini import (
     extract_text_from_pdf,
     get_web_links,
     generate_response,
-    initialize_pdf_index,
     message_handler,
     mensajes,
 )
@@ -22,7 +21,7 @@ class TestBot(unittest.IsolatedAsyncioTestCase):
     @patch("os.path.exists", return_value=True)
     def test_guardar_en_json(self, mock_exists, mock_file):
         guardar_en_json("1", "Hola", "Respuesta")
-        mock_file.assert_called_with("conversaciones.json", "w", encoding="utf-8")
+        mock_file.assert_called_with("data/conversaciones.json", "w", encoding="utf-8")
 
     def test_handle_user_message(self):
         mensajes.clear()
@@ -79,6 +78,7 @@ class TestBot(unittest.IsolatedAsyncioTestCase):
         self.assertIn("https://a.com", respuesta)
 
     '''
+    @patch("src.bot_chat_gemini.SentenceTransformer")  # Añadir mock para SentenceTransformer
     @patch("src.bot_chat_gemini.VectorStoreIndex.from_documents")
     @patch("src.bot_chat_gemini.Document")
     @patch("src.bot_chat_gemini.extract_text_from_pdf", return_value="Texto simulado")
@@ -92,14 +92,20 @@ class TestBot(unittest.IsolatedAsyncioTestCase):
             mock_listdir,
             mock_extract,
             mock_document,
-            mock_from_documents
+            mock_from_documents,
+            mock_sentence_transformer  # Nuevo mock
     ):
+        # Configurar el mock para SentenceTransformer
+        mock_sentence_transformer.return_value = MagicMock()
 
+        # Configurar el mock para VectorStoreIndex.from_documents
         mock_instance = MagicMock()
         mock_from_documents.return_value = mock_instance
 
+        # Llamar a la función bajo prueba
         initialize_pdf_index()
 
+        # Verificar que se llamó a from_documents
         mock_from_documents.assert_called_once()
         mock_document.assert_called_once_with(text="Texto simulado")
     '''
