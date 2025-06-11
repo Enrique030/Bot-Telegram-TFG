@@ -226,8 +226,10 @@ async def message_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def send_welcome_message(application):
     """Función que envía un mensaje de bienvenida cuando el bot se inicia"""
     welcome_message = (
-        "¡Hola! 😊 Soy Prevencio-Bot, tu asistente de riesgos laborales. "
-        "Pregúntame lo que necesites sobre la seguridad en las PYMEs."
+        "¡Hola, bienvenido! 😊 Soy tu asistente virtual especializado en riesgos laborales."
+        "Estoy aquí para ayudarle con cualquier consulta relacionada con la seguridad, "
+        "prevención y normativa aplicable a las Pequeñas y Medianas Empresas (PYMEs). ¿En qué "
+        "puedo ayudarle hoy?"
     )
     await application.bot.send_message(chat_id=TELEGRAM_USER_ID, text=welcome_message)
 
