@@ -19,9 +19,11 @@ de entorno '.env' con tu token.
 'GOOGLE_API_KEY' en el fichero de variables de entorno '.env' con tu API KEY.
 7. Crea una API KEY en la web oficial de SerpAPI <https://serpapi.com/> y reemplaza 'SERPAPI_KEY' en el 
 fichero de variables de entorno '.env' con tu API KEY.
-8. Ejecuta el bot ejecutando el programa 'bot_chat_gemini.py' o escribiendo <python bot_chat_gemini.py> 
-en tu terminal.
-9. Abre Telegram y conversa con tu asistente.
+8. Ejecuta los tests unitarios para comprobar que todo está correcto. Dentro de la carpeta 'tests' ejecuta 
+el programa 'unnitest_bot.py' o escribe en la terminal <python unittest_bot.py>.
+9. Ejecuta el bot desde la carpeta 'src' ejecutando el programa 'bot_chat_gemini.py' o escribiendo 
+<python bot_chat_gemini.py> en la terminal.
+10. Por último, abre Telegram y conversa con tu asistente.
 
 ## Pasos para activar el modo desarrollador en Windows <img src="img/windows_logo.png" width="25">
 1. Ve a la configuración del sistema <img src="img/configuration_logo.png" width="20"/>
